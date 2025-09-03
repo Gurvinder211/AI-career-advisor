@@ -8,24 +8,23 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body {
-      background-color: #f5f6fa;
+      background-color: var(--bs-body-bg);
+      color: var(--bs-body-color);
+      min-height: 100vh;
       display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      transition: background-color .3s, color .3s;
-      font-family: "Segoe UI", sans-serif;
+      flex-direction: column;
     }
-    body.dark-mode {
-      background-color: #1e1e1e;
-      color: #e1e1e1;
+    header {
+      padding: 2rem 1rem 1rem;
+      text-align: center;
     }
     .chat-card {
       width: 450px;
       max-width: 95%;
-      height: 600px;
+      height: 550px;
       display: flex;
       flex-direction: column;
+      margin: 0 auto 2rem;
       border-radius: 1rem;
       overflow: hidden;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
@@ -38,7 +37,7 @@
       justify-content: space-between;
       align-items: center;
     }
-    body.dark-mode .chat-header {
+    body[data-bs-theme="dark"] .chat-header {
       background-color: #2d7dd2;
     }
     #chat-box {
@@ -46,24 +45,20 @@
       overflow-y: auto;
       padding: 1rem;
       background: #fff;
+      word-wrap: break-word;
     }
-    body.dark-mode #chat-box {
+    body[data-bs-theme="dark"] #chat-box {
       background: #2b2b2b;
     }
     .message {
       margin-bottom: .75rem;
-      word-wrap: break-word;
+      max-width: 85%;
       padding: .5rem .75rem;
       border-radius: .5rem;
-      max-width: 80%;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
       font-size: .9rem;
       position: relative;
-    }
-    .message small {
-      font-size: .7rem;
-      opacity: .6;
-      display: block;
-      margin-top: 2px;
     }
     .user-msg {
       background-color: #007bff;
@@ -77,97 +72,99 @@
       margin-right: auto;
       text-align: left;
     }
-    body.dark-mode .user-msg {
+    body[data-bs-theme="dark"] .user-msg {
       background-color: #375a7f;
     }
-    body.dark-mode .bot-msg {
+    body[data-bs-theme="dark"] .bot-msg {
       background-color: #444;
       color: #f1f1f1;
     }
     .chat-footer {
       padding: .5rem;
       background-color: #f8f9fa;
+      display: flex;
+      flex-direction: column;
+      gap: .25rem;
     }
-    body.dark-mode .chat-footer {
+    body[data-bs-theme="dark"] .chat-footer {
       background-color: #1f1f1f;
     }
     .form-control, .btn {
       border-radius: .5rem;
     }
+    #typing-indicator {
+      font-size: .85rem;
+      color: gray;
+      margin-bottom: 4px;
+      text-align: left;
+      display: none;
+    }
+    .control-buttons {
+      display: flex;
+      justify-content: flex-end;
+      gap: .25rem;
+    }
   </style>
 </head>
-<body>
+<body data-bs-theme="light">
+  <!-- Header -->
+  <header>
+    <h1 class="fw-bold">AI Career Advisor</h1>
+    <p class="text-muted">Your personal AI mentor for jobs, skills, and career growth – powered by Google Gemini.</p>
+    <button id="theme-toggle" class="btn btn-outline-secondary btn-sm">🌙 Dark Mode</button>
+  </header>
 
-  <div class="chat-card">
+  <!-- Chat Card -->
+  <div class="card chat-card shadow-sm">
     <div class="chat-header">
-      <span>💼 AI Career Advisor</span>
-      <div class="d-flex gap-1">
-        <button id="toggle-theme" class="btn btn-sm btn-light">🌙</button>
-        <button id="export-chat" class="btn btn-sm btn-light">⬇️</button>
-        <button id="clear-chat" class="btn btn-sm btn-light">🗑</button>
+      <span>💼 Chat</span>
+      <div class="control-buttons">
+        <button id="export-btn" class="btn btn-sm btn-light">⬇️</button>
+        <button id="clear-btn" class="btn btn-sm btn-light">🗑</button>
       </div>
     </div>
 
     <div id="chat-box"></div>
+    <div id="typing-indicator">AI is typing…</div>
 
-    <div class="chat-footer input-group">
-      <input type="text" id="user-input" class="form-control" placeholder="Ask career advice...">
-      <button id="send-btn" class="btn btn-primary">Send</button>
+    <div class="chat-footer">
+      <div class="input-group">
+        <input type="text" id="user-input" class="form-control" placeholder="Ask career advice..." />
+        <button id="send-btn" class="btn btn-primary">Send</button>
+      </div>
     </div>
   </div>
-  <!-- Bootstrap JS bundle (optional for components) -->
+
+  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+
   <script>
-  const chatBox = document.getElementById("chat-box");
+    const chatBox = document.getElementById("chat-box");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
-const clearBtn = document.getElementById("clear-chat");
-const toggleThemeBtn = document.getElementById("toggle-theme");
-const exportBtn = document.getElementById("export-chat");
+const exportBtn = document.getElementById("export-btn");
+const clearBtn = document.getElementById("clear-btn");
+const typingIndicator = document.getElementById("typing-indicator");
+const themeToggle = document.getElementById("theme-toggle");
 
-let typingDiv = null;
+let chatHistory = [];
 
-// Load saved chat + theme
 window.addEventListener("load", () => {
   const saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-  saved.forEach(msg => appendMessage(msg.sender, msg.text, msg.time, false));
+  saved.forEach(msg => appendMessage(msg.sender, msg.text, false));
 
   if (localStorage.getItem("darkMode") === "true") {
-    document.body.classList.add("dark-mode");
+    document.body.setAttribute("data-bs-theme", "dark");
+    themeToggle.textContent = "☀️ Light Mode";
   }
 });
 
 sendBtn.addEventListener("click", sendMessage);
 userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
-
-clearBtn.addEventListener("click", () => {
-  localStorage.removeItem("chatHistory");
-  chatBox.innerHTML = "";
-});
-
-toggleThemeBtn.addEventListener("click", () => {
-  document.body.classList.toggle("dark-mode");
-  localStorage.setItem("darkMode", document.body.classList.contains("dark-mode"));
-});
-
-exportBtn.addEventListener("click", () => {
-  const history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-  if (history.length === 0) return alert("No chat history to export.");
-
-  let text = "AI Career Advisor Chat History\n\n";
-  history.forEach(msg => {
-    text += `[${msg.time}] ${msg.sender.toUpperCase()}: ${msg.text}\n`;
-  });
-
-  const blob = new Blob([text], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "chat_history.txt";
-  a.click();
-  URL.revokeObjectURL(url);
-});
+exportBtn.addEventListener("click", exportChat);
+clearBtn.addEventListener("click", clearChat);
+themeToggle.addEventListener("click", toggleTheme);
 
 async function sendMessage() {
   const message = userInput.value.trim();
@@ -177,8 +174,7 @@ async function sendMessage() {
   saveMessage("user", message);
   userInput.value = "";
 
-  // show typing indicator
-  showTyping();
+  typingIndicator.style.display = "block";
 
   try {
     const response = await fetch("/api/advisor", {
@@ -187,60 +183,69 @@ async function sendMessage() {
       body: JSON.stringify({ message })
     });
     const data = await response.json();
-    hideTyping();
-    const botReply = data.reply || "Sorry, no response from AI.";
-    appendMessage("bot", botReply);
-    saveMessage("bot", botReply);
+
+    typingIndicator.style.display = "none";
+    appendMessage("bot", data.reply || "Sorry, no response from AI.");
+    saveMessage("bot", data.reply || "Sorry, no response from AI.");
   } catch (err) {
     console.error(err);
-    hideTyping();
+    typingIndicator.style.display = "none";
     appendMessage("bot", "Error connecting to server.");
     saveMessage("bot", "Error connecting to server.");
   }
 }
 
-function appendMessage(sender, text, time = new Date().toLocaleTimeString(), scroll = true) {
+function appendMessage(sender, text, save = true) {
   const msgDiv = document.createElement("div");
   msgDiv.classList.add("message");
-  if (sender === "user") {
-    msgDiv.classList.add("user-msg");
-  } else {
-    msgDiv.classList.add("bot-msg");
-  }
-  msgDiv.innerHTML = `${text}<small>${time}</small>`;
+  msgDiv.classList.add(sender === "user" ? "user-msg" : "bot-msg");
+  msgDiv.innerText = text;
   chatBox.appendChild(msgDiv);
-  if (scroll) chatBox.scrollTop = chatBox.scrollHeight;
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  if (save) chatHistory.push({ sender, text });
+  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
 }
 
 function saveMessage(sender, text) {
-  const history = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-  history.push({ sender, text, time: new Date().toLocaleTimeString() });
-  localStorage.setItem("chatHistory", JSON.stringify(history));
+  chatHistory.push({ sender, text });
+  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
 }
 
-function showTyping() {
-  hideTyping(); // ensure only one typing indicator
-  typingDiv = document.createElement("div");
-  typingDiv.classList.add("message", "bot-msg");
-  typingDiv.innerHTML = `Typing<span class="dots">.</span><small></small>`;
-  chatBox.appendChild(typingDiv);
-
-  // animated dots
-  let dots = 1;
-  typingDiv.interval = setInterval(() => {
-    dots = (dots % 3) + 1;
-    typingDiv.querySelector(".dots").textContent = ".".repeat(dots);
-    chatBox.scrollTop = chatBox.scrollHeight;
-  }, 400);
+function exportChat() {
+  if (!chatHistory.length) return alert("No chat to export.");
+  const content = chatHistory.map(m => `${m.sender.toUpperCase()}: ${m.text}`).join("\n\n");
+  const blob = new Blob([content], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "chat-history.txt";
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-function hideTyping() {
-  if (typingDiv) {
-    clearInterval(typingDiv.interval);
-    typingDiv.remove();
-    typingDiv = null;
+function clearChat() {
+  if (!chatHistory.length) return;
+  if (!confirm("Are you sure you want to delete the chat history?")) return;
+  chatHistory = [];
+  localStorage.removeItem("chatHistory");
+  chatBox.innerHTML = "";
+}
+
+function toggleTheme() {
+  const body = document.body;
+  if (body.getAttribute("data-bs-theme") === "light") {
+    body.setAttribute("data-bs-theme", "dark");
+    themeToggle.textContent = "☀️ Light Mode";
+    localStorage.setItem("darkMode", "true");
+  } else {
+    body.setAttribute("data-bs-theme", "light");
+    themeToggle.textContent = "🌙 Dark Mode";
+    localStorage.setItem("darkMode", "false");
   }
 }
+
+
 
   </script>
 
