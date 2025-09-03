@@ -14,6 +14,8 @@ window.addEventListener("load", () => {
   const saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
   saved.forEach(msg => appendMessage(msg.sender, msg.text, false));
 
+    chatHistory = saved;
+
   if (localStorage.getItem("darkMode") === "true") {
     document.body.setAttribute("data-bs-theme", "dark");
     themeToggle.textContent = "☀️ Light Mode";
