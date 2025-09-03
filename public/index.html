@@ -134,118 +134,33 @@
       </div>
     </div>
   </div>
+  <!-- Skills Gap Analysis -->
+<div class="container my-4">
+  <h2 class="text-center mb-3">Skill Gap Analysis</h2>
+  <div class="row mb-3">
+    <div class="col-md-6">
+      <label for="currentSkills" class="form-label">Your Current Skills</label>
+      <textarea id="currentSkills" class="form-control" rows="3" placeholder="e.g. Java, HTML, Communication"></textarea>
+    </div>
+    <div class="col-md-6">
+      <label for="targetRole" class="form-label">Target Role</label>
+      <input type="text" id="targetRole" class="form-control" placeholder="e.g. Frontend Developer">
+      <button id="analyseBtn" class="btn btn-primary mt-3 w-100">Analyse</button>
+    </div>
+  </div>
+
+  <div id="analysisResult" class="mt-4"></div>
+</div>
+
+
 
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="script.js"></script>
 
 
   <script>
-    const chatBox = document.getElementById("chat-box");
-const userInput = document.getElementById("user-input");
-const sendBtn = document.getElementById("send-btn");
-const exportBtn = document.getElementById("export-btn");
-const clearBtn = document.getElementById("clear-btn");
-const typingIndicator = document.getElementById("typing-indicator");
-const themeToggle = document.getElementById("theme-toggle");
-
-let chatHistory = [];
-
-window.addEventListener("load", () => {
-  const saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
-  saved.forEach(msg => appendMessage(msg.sender, msg.text, false));
-
-  if (localStorage.getItem("darkMode") === "true") {
-    document.body.setAttribute("data-bs-theme", "dark");
-    themeToggle.textContent = "☀️ Light Mode";
-  }
-});
-
-sendBtn.addEventListener("click", sendMessage);
-userInput.addEventListener("keypress", e => { if (e.key === "Enter") sendMessage(); });
-exportBtn.addEventListener("click", exportChat);
-clearBtn.addEventListener("click", clearChat);
-themeToggle.addEventListener("click", toggleTheme);
-
-async function sendMessage() {
-  const message = userInput.value.trim();
-  if (!message) return;
-
-  appendMessage("user", message);
-  saveMessage("user", message);
-  userInput.value = "";
-
-  typingIndicator.style.display = "block";
-
-  try {
-    const response = await fetch("/api/advisor", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message })
-    });
-    const data = await response.json();
-
-    typingIndicator.style.display = "none";
-    appendMessage("bot", data.reply || "Sorry, no response from AI.");
-    saveMessage("bot", data.reply || "Sorry, no response from AI.");
-  } catch (err) {
-    console.error(err);
-    typingIndicator.style.display = "none";
-    appendMessage("bot", "Error connecting to server.");
-    saveMessage("bot", "Error connecting to server.");
-  }
-}
-
-function appendMessage(sender, text, save = true) {
-  const msgDiv = document.createElement("div");
-  msgDiv.classList.add("message");
-  msgDiv.classList.add(sender === "user" ? "user-msg" : "bot-msg");
-  msgDiv.innerText = text;
-  chatBox.appendChild(msgDiv);
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  if (save) chatHistory.push({ sender, text });
-  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-}
-
-function saveMessage(sender, text) {
-  chatHistory.push({ sender, text });
-  localStorage.setItem("chatHistory", JSON.stringify(chatHistory));
-}
-
-function exportChat() {
-  if (!chatHistory.length) return alert("No chat to export.");
-  const content = chatHistory.map(m => `${m.sender.toUpperCase()}: ${m.text}`).join("\n\n");
-  const blob = new Blob([content], { type: "text/plain" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "chat-history.txt";
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function clearChat() {
-  if (!chatHistory.length) return;
-  if (!confirm("Are you sure you want to delete the chat history?")) return;
-  chatHistory = [];
-  localStorage.removeItem("chatHistory");
-  chatBox.innerHTML = "";
-}
-
-function toggleTheme() {
-  const body = document.body;
-  if (body.getAttribute("data-bs-theme") === "light") {
-    body.setAttribute("data-bs-theme", "dark");
-    themeToggle.textContent = "☀️ Light Mode";
-    localStorage.setItem("darkMode", "true");
-  } else {
-    body.setAttribute("data-bs-theme", "light");
-    themeToggle.textContent = "🌙 Dark Mode";
-    localStorage.setItem("darkMode", "false");
-  }
-}
-
-
+    
 
   </script>
 
