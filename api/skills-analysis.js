@@ -18,11 +18,15 @@ export default async function handler(req, res) {
 
     // Prompt for skills gap analysis
     const prompt = `
-      You are an AI Career Advisor. 
-      The user currently has these skills: "${skills}". 
-      Their target role or career path is: "${role}". 
-      Identify the main skill gaps, recommend how to close them (with next steps, courses or learning paths),
-      and present it in a clear, actionable format.
+     You are an AI Career Advisor. 
+The user has these skills: "${skills}" and their target role is: "${role}".  
+Give a short, easy-to-read skill gap analysis in this format:  
+
+**Key Gaps:** (3–5 bullet points, max 1 line each)  
+**Next Steps:** (3 concise actions with suggested resources)  
+
+Keep the response clear, concise, and actionable.
+
     `;
 
     const result = await model.generateContent(prompt);

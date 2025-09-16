@@ -1,4 +1,3 @@
-
 const chatBox = document.getElementById("chat-box");
 const userInput = document.getElementById("user-input");
 const sendBtn = document.getElementById("send-btn");
@@ -13,8 +12,6 @@ let chatHistory = [];
 window.addEventListener("load", () => {
   const saved = JSON.parse(localStorage.getItem("chatHistory") || "[]");
   saved.forEach(msg => appendMessage(msg.sender, msg.text, false));
-
-    chatHistory = saved;
 
   if (localStorage.getItem("darkMode") === "true") {
     document.body.setAttribute("data-bs-theme", "dark");
@@ -99,21 +96,27 @@ function toggleTheme() {
   }
 }
 
+// Theme toggle
+document.getElementById('theme-toggle').addEventListener('click', function () {
+  const body = document.body;
+  const currentTheme = body.getAttribute('data-bs-theme');
+  body.setAttribute('data-bs-theme', currentTheme === 'light' ? 'dark' : 'light');
+  this.textContent = currentTheme === 'light' ? '☀️ Light Mode' : '🌙 Dark Mode';
+});
 
-// Skills Gap Analysis
+// Skill Gap Analysis (calls /api/skills-analysis)
+document.getElementById('analyseBtn').addEventListener('click', async function () {
+  const skills = document.getElementById('currentSkills').value.trim();
+  const role = document.getElementById('targetRole').value.trim();
+  const resultDiv = document.getElementById('analysisResult');
 
-const analyseBtn = document.getElementById("analyseBtn");
-const analysisResult = document.getElementById("analysisResult");
-
-analyseBtn.addEventListener("click", async () => {
-  const skills = document.getElementById("currentSkills").value.trim();
-  const role = document.getElementById("targetRole").value.trim();
   if (!skills || !role) {
-    analysisResult.innerHTML = `<div class="alert alert-warning">Please fill in both fields.</div>`;
+    resultDiv.innerHTML = '<div class="alert alert-warning">Please enter both your skills and target role.</div>';
     return;
   }
 
-  analysisResult.innerHTML = `<div class="text-center text-muted">Analysing... ⏳</div>`;
+  // show loading
+  resultDiv.innerHTML = `<div class="text-center text-muted">Analysing… ⏳</div>`;
 
   try {
     const res = await fetch("/api/skills-analysis", {
@@ -121,31 +124,29 @@ analyseBtn.addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ skills, role })
     });
+
+    if (!res.ok) throw new Error("Server error");
     const data = await res.json();
 
-    // For now just show the AI text
-    renderAnalysis(data.analysis);
+    // show AI result
+    resultDiv.innerHTML = `
+      <div class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title">Skill Gaps & Recommendations</h5>
+          <p class="card-text">${(data.analysis || "")
+            .replace(/\n/g, "<br>")}</p>
+        </div>
+      </div>
+      <button class="btn btn-outline-secondary mt-2" onclick="exportAnalysis()">Export</button>
+    `;
   } catch (err) {
-    analysisResult.innerHTML = `<div class="alert alert-danger">Error contacting server.</div>`;
+    console.error(err);
+    resultDiv.innerHTML = `<div class="alert alert-danger">Error contacting server.</div>`;
   }
 });
 
-function renderAnalysis(text) {
-  /* You can parse text here if you want structured cards.
-     For MVP, just show it in a styled card. */
-  analysisResult.innerHTML = `
-    <div class="card shadow-sm">
-      <div class="card-body">
-        <h5 class="card-title">Skill Gaps & Recommendations</h5>
-        <p class="card-text">${text.replace(/\n/g, "<br>")}</p>
-      </div>
-    </div>
-    <button class="btn btn-outline-secondary mt-2" onclick="exportAnalysis()">Export</button>
-  `;
-}
-
 function exportAnalysis() {
-  const text = analysisResult.innerText;
+  const text = document.getElementById('analysisResult').innerText;
   const blob = new Blob([text], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -154,4 +155,46 @@ function exportAnalysis() {
   a.click();
   URL.revokeObjectURL(url);
 }
+
+
+// ChatBot Skill Gap Analysis
+document.getElementById('chatbotSkillBtn').addEventListener('click', function () {
+  document.getElementById('featureResult').innerHTML = `
+    <div class="alert alert-primary">
+      <strong>ChatBot Skill Gap Analysis:</strong><br>
+      Start a chat in the chat window to get personalized skill gap advice!
+    </div>
+  `;
+});
+
+// Job Market Trend Maker
+document.getElementById('trendBtn').addEventListener('click', function () {
+  document.getElementById('featureResult').innerHTML = `
+    <div class="alert alert-info">
+      <strong>Job Market Trends:</strong><br>
+      Trending roles: Frontend Developer, Data Analyst, Cloud Engineer.<br>
+      <em>More detailed trends coming soon...</em>
+    </div>
+  `;
+});
+
+// Mentor & Peer Connect
+document.getElementById('connectBtn').addEventListener('click', function () {
+  document.getElementById('featureResult').innerHTML = `
+    <div class="alert alert-success">
+      <strong>Mentor & Peer Connect:</strong><br>
+      Find mentors and peers in your field.<br>
+      <em>Connection feature coming soon...</em>
+    </div>
+  `;
+});
+
+// Optional: Clear feature result on new action
+['chatbotSkillBtn', 'trendBtn', 'connectBtn'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function () {
+    setTimeout(() => {
+      document.getElementById('featureResult').scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  });
+});
 
