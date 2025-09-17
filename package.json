@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@google/generative-ai": "^0.3.0",
-    "@vercel/node": "^5.3.14"
+    "@vercel/node": "^5.3.14",
+    "marked": "^16.2.1"
   }
 }
